@@ -34,8 +34,8 @@ class t_port:
                     print("   {} {} {}".format(port, c[0], c[1]))
         else:
             print("Port {}: {} {} ".format(self.name, self.direction, self.wire_type))
-            for c in self.ports[port]:
-                print("   {} {}".format(port, c[0], c[1]))
+            for c in self.ports[self.name]:
+                print("   {} {}".format(c[0], c[1]))
 
         
 class t_wire:

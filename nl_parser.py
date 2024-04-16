@@ -59,7 +59,7 @@ class nl_parser:
         for i in range(len(m1)):
             #module name
             if not module:    
-                ret = re.match(r'^module\s+(\w+)\s+', m1[i], re.S)
+                ret = re.match(r'^module\s+(\w+)', m1[i], re.S)
                 if ret:
                     module_name = ret.group(1)
                     module_temp = t_module(module_name)
@@ -71,7 +71,7 @@ class nl_parser:
             m1_temp = re.sub(r'\n', '', m1[i], re.S)
             m1_temp = re.sub(r'\s+',' ',m1_temp)
             if not port:    
-                ret = re.match(r'^(input|output|inout)\s+\[(\d+):(\d+)\]\s+(\w+)', m1_temp, re.S)
+                ret = re.match(r'^\s*(input|output|inout)\s+\[(\d+):(\d+)\]\s+(\w+)', m1_temp, re.S)
                 if ret:
                     port_direction = ret.group(1)
                     if int(ret.group(2)) > int(ret.group(3)):
@@ -83,30 +83,24 @@ class nl_parser:
                     port_name = ret.group(4)
                     port_temp = t_port()
                     port_temp.new_port(port_name, port_direction, "wire", port_msb, port_lsb)
-                    try:
-                        module_temp.add_port(port_temp)
-                    except UnboundLocalError as e:
-                        print("line info unparserable ", m[i])
+                    module_temp.add_port(port_temp)
                     continue
 
                 else:
                     ret = re.match(r'^(input|output|inout)\s+\[(\d+)\]\s+(\w+)', m1_temp, re.S)
                     if ret:
                         port_direction = ret.group(1)
-                        port_msb = ret.group(2)
-                        port_lsb = ret.group(2)
+                        port_msb = int(ret.group(2))
+                        port_lsb = int(ret.group(2))
                         port_name = ret.group(3)
                         port_temp = t_port()
                         port_temp.new_port(port_name, port_direction, "wire", port_msb, port_lsb)
-                        try:
-                            module_temp.add_port(port_temp)
-                        except UnboundLocalError as e:
-                            print("line info unparserable ", m[i])
+                        module_temp.add_port(port_temp)
                         continue
 
                     else:
                         ret = re.match(r'^\s*(input|output|inout)\s+(\w+)', m1_temp, re.S)
-                        rep = re.match(r'^\s*(input|output|inout)\s+(\w+)(,\s*\w+)+', m1_temp)
+                        rep = re.match(r'^\s*(input|output|inout)\s+((\w+)(,\s*\w+)+)', m1_temp)
                         if ret and not rep:
                             port_direction = ret.group(1)
                             port_msb = 0
@@ -114,25 +108,19 @@ class nl_parser:
                             port_name = ret.group(2)
                             port_temp = t_port()
                             port_temp.new_port(port_name, port_direction, "wire", port_msb, port_lsb)
-                            try:
-                                module_temp.add_port(port_temp)
-                            except UnboundLocalError as e:
-                                print("line info unparserable ", m[i])
+                            module_temp.add_port(port_temp)
                             continue
                         elif rep:
-                            port_direction = ret.group(1)
+                            port_direction = rep.group(1)
                             port_msb = 0
                             port_lsb = 0
-                            m2 = re.match(r'^\s*(input|output|inout)\s+((\w+)(,\s*\w+)+)', m1_temp).group(2)
+                            m2 = rep.group(2)
                             m2 = re.sub(r'\s', '', m2)
                             m2_temp = m2.split(',')
                             for m2port in m2_temp:
                                 port_temp = t_port()
                                 port_temp.new_port(m2port, port_direction, "wire", port_msb, port_lsb)
-                                try:
-                                    module_temp.add_port(port_temp)
-                                except UnboundLocalError as e:
-                                    print("line info unparserable ", m[i])
+                                module_temp.add_port(port_temp)
                             continue
 
                 
