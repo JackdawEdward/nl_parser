@@ -126,9 +126,10 @@ class nl_parser:
                 
             #wire
             if not wire:
-                ret = re.match(r'^wire\s+\[(\d+):(\d+)\]\s+(\w+)', m1_temp, re.S)
-                rep = re.match(r'^\s*wire\s+(,\s*\w+)+',m1_temp)
-                if ret and not rep:
+                ret = re.match(r'^\s*wire\s+\[(\d+):(\d+)\]\s+(\w+)', m1_temp, re.S)
+                re2 = re.match(r'^\s*wire\s+((\\[\w|\*|\[|\]]+)\s*(,\s*(\w+|(\\[\w|\*|\[|\]]+))\s*)*)',m1_temp)
+                rep = re.match(r'^\s*wire\s+(\w+\s*(,\s*\w+\s*)+)',m1_temp)
+                if ret:
                     if int(ret.group(1)) > int(ret.group(2)):
                         wire_msb = int(ret.group(1))
                         wire_lsb = int(ret.group(2))
@@ -144,7 +145,16 @@ class nl_parser:
                     continue
                 elif rep:
                     port = True
-                    m2 = re.match(r'^\s+wire\s+(((\w+)(,\s*\w+)+))', m1_temp).group(2)
+                    m2 = rep.group(1)
+                    m2 = re.sub(r'\s','',m2)
+                    m2_temp = m2.split(',')
+                    for m2wire in m2_temp:
+                        wire_temp = t_wire(m2wire)
+                        module_temp.add_wire(wire_temp)
+                    continue
+                elif re2:
+                    port = True
+                    m2 = re2.group(1)
                     m2 = re.sub(r'\s','',m2)
                     m2_temp = m2.split(',')
                     for m2wire in m2_temp:
@@ -161,7 +171,8 @@ class nl_parser:
                 continue
                     
             #inst
-            ret = re.match(r'^\s*(\w+)\s+(\w+)\s+\((.*)\)\s*$', m1_temp, re.S)
+            ret = re.match(r'^\s*(\w+)\s+(\w+|\\[\w|\*|\[|\]]+)\s*\((.*)\)', m1_temp, re.S)
+            # ret = re.match(r'^\s*(\w+)\s+(\w+|\\[\w|\*|\[|\]]+)\s*\(([^()]*)\)\s*$', m1_temp, re.S)
             if ret:
                 #print(m1_temp)
                 wire = True
@@ -170,8 +181,8 @@ class nl_parser:
                 inst_name = ret.group(2)
                 port_map_s = ret.group(3)
                 
-                inst_temp = t_inst(inst_name);
-                inst_temp.new_inst(mod_name, inst_name);
+                inst_temp = t_inst(inst_name)
+                inst_temp.new_inst(mod_name, inst_name)
 
                 port_map_s = re.sub(r'\n', '', port_map_s, re.S)
                 port_map_s = re.sub(r'\s', '', port_map_s, re.S)
@@ -187,7 +198,7 @@ class nl_parser:
                             module_temp.ports[i].add_conn(r.group(2), inst_name, r.group(1))
                         elif module_temp.exist_wire(r.group(2)):
                             i = module_temp.find_wire(r.group(2))
-                            module_temp.wires[i].add_conn(inst_name, r.group(1))
+                            module_temp.wires[i].add_conn(inst_name, r.group(1)) # type: ignore
                         else:
                             wire_temp = t_wire(r.group(2))
                             wire_temp.add_conn(inst_name, r.group(1))
